@@ -4,7 +4,7 @@ import lombok.*;
 
 import javax.persistence.*;
 
-@Entity //ORM개념
+@Entity
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

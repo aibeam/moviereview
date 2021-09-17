@@ -12,8 +12,11 @@ import org.zerock.mreview.entity.Movie;
 import org.zerock.mreview.entity.MovieImage;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.IntStream;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class MovieRepositoryTests {
@@ -28,7 +31,7 @@ class MovieRepositoryTests {
     @Test
     public void insertMovies() {
         IntStream.rangeClosed(1,100).forEach(i->{
-            Movie movie = Movie.builder().title("Movie..." +i).build(); //Movie 인스턴스 생성
+            Movie movie = Movie.builder().title("Movie..." +i).build();  //Movie 인스턴스 생성
             System.out.println("--------------------------------------");
             movieRepository.save(movie); //그 인스턴스를 저장
             int count = (int)(Math.random() * 5) + 1;
@@ -46,13 +49,20 @@ class MovieRepositoryTests {
     }
 
     @Test
-    public void testListpage(){
-        PageRequest pageRequest = PageRequest.of(
-                0, 10, Sort.by(Sort.Direction.DESC, "mno")
-        );
+    public void testListPage(){
+        PageRequest pageRequest = PageRequest.of(0,10, Sort.by(Sort.Direction.DESC, "mno"));
         Page<Object[]> result = movieRepository.getListPage(pageRequest);
-        for (Object[] objects : result.getContent()) {
+        for(Object[] objects : result.getContent()) {
             System.out.println(Arrays.toString(objects));
+        }
+    }
+
+    @Test
+    public void testGetMovieWithAll(){
+        List<Object[]> result = movieRepository.getMovieWithAll(70L);
+        System.out.println(result);
+        for (Object[] arr : result) {
+            System.out.println(Arrays.toString(arr));
         }
     }
 }

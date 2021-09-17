@@ -9,7 +9,7 @@ import javax.persistence.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
-@ToString(exclude = {"movie", "member"})
+@ToString(exclude = {"movie","member"})
 public class Review extends BaseEntity{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,8 +18,8 @@ public class Review extends BaseEntity{
     @ManyToOne(fetch = FetchType.LAZY)
     private Movie movie;
 
-    @ManyToOne (fetch = FetchType.LAZY)
-    private Member member;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Member member ;
 
     private int grade;
     private String text;
