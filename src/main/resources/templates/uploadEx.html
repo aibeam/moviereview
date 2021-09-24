@@ -7,6 +7,10 @@
 <body>
 <input name="uploadFiles" type="file" multiple>
 <button class="uploadBtn">업로드</button>
+<div class="uploadResult">
+
+</div>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
 <script>
     $('.uploadBtn').click(function(){
@@ -18,19 +22,48 @@
             formData.append("uploadFiles", files[i]);
         }
         $.ajax({
+<!--        ajax : 화면이 부분적으로 바뀌는 것. 비동기적으로 바뀜.-->
             url : '/uploadAjax',
             processData : false,
             contentType: false,
             data : formData,
             type : 'post',
             dataType : 'json',
-            success : function(){
-            console.log(result);},
+            success : function(result){
+                showUploadedImages(result);
+            },
             error : function(jqXHR, textStatus, errorThrown){
                 console.log(textStatus);
             }
-        })
+        });
+        $('.uploadResult').on("click",".removeBtn", function(e){
+            var target = $(this);
+            var fileName = target.data("name");
+            var targetDiv = $(this).closest("div");
+
+            console.log(fileName);
+
+            $.post('/removeFile', {fileName: fileName}, function(result){
+                console.log(result);
+                if(result == true){
+                    targetDiv.remove();
+                }
+            })
+        });
     });
+    function showUploadedImages(arr){
+        console.log(arr);
+        var divArea = $(".uploadResult");
+        var str = "";
+
+            for(var i=0; i<arr.length; i++){
+                str += "<div>";
+                str += "<img src='/display?fileName="+arr[i].thumbnailURL+"'>";
+                str += "<button class='removeBtn' style='background-color:red; border-radius:3px; border-color:black; color:white;' data-name='"+arr[i].imageURL+"'>x</button>"
+                str += "</div>";
+            }
+        divArea.append(str);
+    }
     </script>
 </body>
 </html>
