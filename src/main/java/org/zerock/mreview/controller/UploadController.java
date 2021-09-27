@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,33 +30,35 @@ import java.util.UUID;
 @RestController
 @Log4j2
 public class UploadController {
+
     @Value("${org.zerock.upload.path}")
     private String uploadPath;
 
     @PostMapping("/uploadAjax")
     public ResponseEntity<List<UploadResultDTO>> uploadFile(MultipartFile[] uploadFiles) {
         List<UploadResultDTO> resultDTOList = new ArrayList<>();
-        for(MultipartFile uploadFile: uploadFiles) {
-            if(uploadFile.getContentType().startsWith("image")==false){
+
+        for (MultipartFile uploadFile : uploadFiles) {
+            if (uploadFile.getContentType().startsWith("image") == false) {
                 log.warn("이미지 파일이 아닙니다. 확장자를 확인해주세요");
                 return new ResponseEntity<>(HttpStatus.FORBIDDEN);
             }
             String originalName = uploadFile.getOriginalFilename();
-            //c:\classData\workspace\like.jpg
-            String fileName = originalName.substring(
-                    originalName.lastIndexOf("\\")+1);
-            log.info("fileName: "+fileName);
+            String fileName = originalName.substring(originalName.lastIndexOf("\\")+1);
+            log.info(fileName);
 
             String folderPath = makeFolder();
 
             String uuid = UUID.randomUUID().toString();
             String saveName = uploadPath + File.separator + folderPath
-                    + File.separator + uuid + "_" +fileName;
+                    + File.separator + uuid + "_" + fileName;
             Path savePath = Paths.get(saveName);
             try {
                 uploadFile.transferTo(savePath);
+
+                //썸네일 생성
                 String thumbnailSaveName = uploadPath + File.separator + folderPath
-                        + File.separator +"s_"+ uuid + "_" +fileName;
+                        + File.separator + "s_" + uuid + "_" + fileName;
                 File thumbnailFile = new File(thumbnailSaveName);
                 Thumbnailator.createThumbnail(savePath.toFile(), thumbnailFile, 100,100);
                 resultDTOList.add(new UploadResultDTO(fileName, uuid, folderPath));
@@ -71,12 +74,13 @@ public class UploadController {
         ResponseEntity<byte[]> result = null;
         try {
             String srcFileName = URLDecoder.decode(fileName, "UTF-8");
-            log.info("file : "+srcFileName);
-            File file = new File(uploadPath+File.separator+srcFileName);
-            log.info("file : "+file);
+            log.info("fileName : " + srcFileName);
+            File file = new File(uploadPath + File.separator + srcFileName);
+            log.info("file : " + file);
             HttpHeaders header = new HttpHeaders();
             header.add("Content-Type", Files.probeContentType(file.toPath()));
-            result = new ResponseEntity<>(FileCopyUtils.copyToByteArray(file),header,HttpStatus.OK);
+            result = new ResponseEntity<>(FileCopyUtils.copyToByteArray(file),
+                    header, HttpStatus.OK);
         } catch (Exception e) {
             e.printStackTrace();
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -85,19 +89,19 @@ public class UploadController {
     }
 
     @PostMapping("/removeFile")
-    public ResponseEntity<Boolean> removeFiles(String fileName){
+    public ResponseEntity<Boolean> removeFiles(String fileName) {
         String srcFileName = null;
         boolean result = false;
         try {
-            srcFileName = URLDecoder.decode(fileName,"UTF-8");
-            File file = new File(uploadPath+File.separator+srcFileName);
+            srcFileName = URLDecoder.decode(fileName, "UTF-8");
+            File file = new File(uploadPath + File.separator + srcFileName);
             result = file.delete();
-            File thumbnail = new File(file.getParent(),"s_"+srcFileName);
+            File thumbnail = new File(file.getParent(), "s_" + file.getName());
             result = thumbnail.delete();
             return new ResponseEntity<>(result, HttpStatus.OK);
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
-            return new ResponseEntity<>(false, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(result, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -105,10 +109,9 @@ public class UploadController {
         String str = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
         String folderPath = str.replace("/", File.separator);
         File uploadPathFolder = new File(uploadPath, folderPath);
-        if(uploadPathFolder.exists()==false){
+        if (uploadPathFolder.exists() == false) {
             uploadPathFolder.mkdirs();
         }
         return folderPath;
     }
 }
-
